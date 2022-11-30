@@ -1,1 +1,76 @@
-gheifveber pw[eih
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 4- Run a statistical test on the Palmer Penguins dataset and produce a figure to explain it ##
+
+First, I need to install the relevant packages and use the library function to ensure they are ready to use.
+```{r, include = FALSE}
+library(palmerpenguins)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(janitor)
+library(devtools)
+library(ragg)
+library(svglite)
+```
+
+Next, I will create a function to clean my data by removing any unecessary information. Now, I can look at the data to make sure it has been changed.
+```{r}
+cleaning <- function(penguins_raw){
+  penguins_raw %>%
+    select(-starts_with("delta")) %>%
+    select(-Comments) %>% 
+    remove_empty(c("rows", "cols")) %>% 
+    clean_names() 
+}
+
+Penguins_clean <- cleaning(penguins_raw)
+Penguins_final <- rename(Penguins_clean, Species = species)
+```
+
+The assumptions of a linear regression are as follows:
+
+* Linearity
+* Homoscedasticity
+* Independence
+* Normality 
+
+The following code generates diagnostic plots to check these assumptions. 
+```{r}
+penguins_lm <- lm(flipper_length_mm ~ body_mass_g, data = Penguins_final)
+par(mfrow = c(2, 2))
+plot(penguins_lm)
+```
+
+We know that the data are independent as the traits of one penguin does not affect the outcome of the traits of another. 
+
+We can see that the data are linear with no distinctive pattern in the 'Linear vs Fitted' plot. This means that there is linearity.
+
+In the 'Normal Q-Q' plot, we see most points lie on the dotted line, meaning the data is normally distributed. 
+
+To check for homoscedasticity, we observed the 'Scale-Location' plot. As the points are fairly randomly distributed around the line, this assumption has been met. 
+
+Our data, therefore, meets all requirements and I can continue with my linear regression analysis. 
+
+***********************************************************************************
+
+Now, we can make a graph to demonstrate our data and plot our linear regression line over the top using the following code:
+
+```{r, include = FALSE}
+summary(penguins_lm)
+```
+```{r, warning = FALSE}
+lm_plot <- plot(ggplot(data = Penguins_final, aes(x = body_mass_g, y = flipper_length_mm)) + geom_point(aes(col = Species)) + geom_smooth(method = 'lm', col = 'black') + theme_bw() + labs(title = "Plot of flipper length against body mass", x = "Body mass (g)", y = "Flipper length (mm)") + theme(aspect.ratio=1, plot.title = element_text(face="bold", hjust = 0.5), legend.title = element_text(face="bold"), axis.title.x = element_text(face="bold"), axis.title.y = element_text(face="bold"), axis.text = element_text(size = 11), legend.text = element_text(size = 10)) + scale_fill_discrete(name = "Species"))
+```
+
+
+Finally, we can save the plot as an svg vector into a folder called figures. Now, we can distribute the plot using this. 
+```{r, warning = FALSE, message = FALSE}
+svglite("figures/fig01_30x30_poster.svg", width = 10, height = 10, scaling = 1.6)
+lm_plot
+dev.off()
+```
+
+
